@@ -1,0 +1,114 @@
+version: '3'
+services:
+  debunker-assistant:
+    container_name: debunker-assistant
+    environment:
+      - DEBUNKER_USERNAME=debunker
+      - DEBUNKER_PASSWORD=password
+    restart: always
+    build: './debunker-assistant'
+    networks:
+      static-network:
+        ipv4_address: 10.12.0.3
+    ports:
+     - '8080:8080'
+    depends_on:
+      - chrome
+
+  debunker-api:
+    container_name: debunker-assistant-api
+    environment:
+      - RAILS_ENV=production
+      - RAILS_SERVE_STATIC_FILES=true
+      - RAILS_LOG_TO_STDOUT=true
+      - BUNDLE_WITHOUT=development:test
+    restart: always
+    build:
+      context: ./debunker-api
+      dockerfile: Dockerfile
+    networks:
+      static-network:
+        ipv4_address: 10.12.0.5
+    ports:
+     - '3001:3001'
+    volumes:
+      - ./debunker-api:/debunker-api
+    depends_on:
+      - debunker-assistant
+      - database
+      - redis
+
+  debunker-web:
+    container_name: debunker-assistant-web
+    environment:
+      - RAILS_ENV=production
+      - RAILS_SERVE_STATIC_FILES=true
+      - RAILS_LOG_TO_STDOUT=true
+      - BUNDLE_WITHOUT=development:test
+    restart: always
+    build:
+      context: ./debunker-web
+      dockerfile: Dockerfile
+    networks:
+      static-network:
+        ipv4_address: 10.12.0.6
+    ports:
+     - '3000:3000'
+    volumes:
+      - ./debunker-web:/debunker-web
+    depends_on:
+      - database
+      - redis
+      - mailhog
+
+  database:
+    container_name: debunker-assistant-database
+    image: postgres
+    networks:
+      static-network:
+        ipv4_address: 10.12.0.7
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+    volumes:
+      - database:/var/lib/postgresql/data
+
+  chrome:
+    container_name: debunker-assistant-chrome
+    image: seleniarm/standalone-chromium
+    hostname: chrome
+    networks:
+      static-network:
+        ipv4_address: 10.12.0.4
+    ports:
+      - "4444:4444"
+
+  redis:
+    container_name: debunker-assistant-redis
+    image: redis
+    networks:
+      static-network:
+        ipv4_address: 10.12.0.8
+
+  mailhog:
+    container_name: debunker-assistant-mailhog
+    image: jcalonso/mailhog
+    networks:
+      static-network:
+        ipv4_address: 10.12.0.9
+    ports:
+      - "8025:8025"
+
+networks:
+  static-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.12.0.0/16
+          gateway: 10.12.0.1
+
+volumes:
+  database:
