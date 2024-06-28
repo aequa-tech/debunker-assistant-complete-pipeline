@@ -1,9 +1,12 @@
 [submodule "debunker-assistant"]
 	path = debunker-assistant
 	url = https://github.com/aequa-tech/debunker-assistant.git
+	branch = main
 [submodule "debunker-api"]
 	path = debunker-api
 	url = git@github.com:aequa-tech/debunker-api.git
+	branch = main
 [submodule "debunker-web"]
 	path = debunker-web
 	url = git@github.com:aequa-tech/debunker-web.git
+	branch = main
