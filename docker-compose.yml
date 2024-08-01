@@ -8,7 +8,7 @@ services:
     restart: always
     build: './debunker-assistant'
     networks:
-      static-network:
+      debunker-assistant-network:
         ipv4_address: 10.12.0.3
     ports:
      - '8080:8080'
@@ -27,13 +27,14 @@ services:
       context: ./debunker-api
       dockerfile: Dockerfile
     networks:
-      static-network:
+      debunker-assistant-network:
         ipv4_address: 10.12.0.5
     ports:
      - '3001:3001'
     volumes:
       - ./debunker-api:/debunker-api
     depends_on:
+      - sidekiq
       - debunker-assistant
       - database
       - redis
@@ -50,7 +51,7 @@ services:
       context: ./debunker-web
       dockerfile: Dockerfile
     networks:
-      static-network:
+      debunker-assistant-network:
         ipv4_address: 10.12.0.6
     ports:
      - '3000:3000'
@@ -65,7 +66,7 @@ services:
     container_name: debunker-assistant-database
     image: postgres
     networks:
-      static-network:
+      debunker-assistant-network:
         ipv4_address: 10.12.0.7
     ports:
       - "5432:5432"
@@ -80,29 +81,52 @@ services:
     image: seleniarm/standalone-chromium
     hostname: chrome
     networks:
-      static-network:
+      debunker-assistant-network:
         ipv4_address: 10.12.0.4
     ports:
       - "4444:4444"
+
+  sidekiq:
+    container_name: debunker-assistant-sidekiq
+    environment:
+      - RAILS_ENV=production
+      - RAILS_SERVE_STATIC_FILES=true
+      - RAILS_LOG_TO_STDOUT=true
+      - BUNDLE_WITHOUT=development:test
+    restart: always
+    build:
+      context: ./debunker-api
+      dockerfile: Dockerfile
+
+    command: bundle exec sidekiq -C config/sidekiq.yml
+    networks:
+      debunker-assistant-network:
+        ipv4_address: 10.12.0.20
+    ports:
+     - '3007:3000'
+    volumes:
+      - ./debunker-api:/debunker-api
+    depends_on:
+      - redis
 
   redis:
     container_name: debunker-assistant-redis
     image: redis
     networks:
-      static-network:
+      debunker-assistant-network:
         ipv4_address: 10.12.0.8
 
   mailhog:
     container_name: debunker-assistant-mailhog
     image: jcalonso/mailhog
     networks:
-      static-network:
+      debunker-assistant-network:
         ipv4_address: 10.12.0.9
     ports:
       - "8025:8025"
 
 networks:
-  static-network:
+  debunker-assistant-network:
     driver: bridge
     ipam:
       driver: default
