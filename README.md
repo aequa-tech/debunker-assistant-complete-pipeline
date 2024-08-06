@@ -17,7 +17,11 @@ It is also possible to customize the environment variables of _Debunker Api_ and
 **Starting the project**
 The _Debunker Assistant_, _Debunker Api_, and _Debunker Web_ services are integrated via git submodules.
 Therefore, execute the checkout through
-`git submodule update`
+
+```
+git submodule init
+git submodule update
+```
 
 Once the checkout is done, the entire pipeline can be started with
 `docker compose up --build` / `docker compose up`
